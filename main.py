@@ -1,8 +1,8 @@
 import requests
 import json
-from win10toast import ToastNotifier
-
-notifier_ = ToastNotifier()
+import webbrowser
+import time
+from win10toast_click_custom import ToastNotifier
 
 
 def get_latest_articles(latest_id, api_uri):
@@ -22,26 +22,37 @@ def get_latest_articles(latest_id, api_uri):
     return new_lastest_id, new_articles
 
 
-def notif(notifier, title, message):
+def open_browser(page_url):
+    try:
+        webbrowser.open(page_url, new=2, autoraise=False)
+    except:
+        print('Failed to open URL. Unsupported variable type.')
+
+
+def notif(title, message):
+    notifier = ToastNotifier()
     notifier.show_toast(
         title=title,
         msg=message,
-        duration=100000,
+        duration=None,
         icon_path="resources/NW_Icon1.ico",
         threaded=True
     )
 
 
 def main():
-    while True:
+    interupted = False
+    while not(interupted):
         with open('info.json', 'r') as f:
             info = json.load(f)
-        info["latest_id"], latest_articles = get_latest_articles(info["latest_id"], info["api_uri"])
+        new_lastest_id, latest_articles = get_latest_articles(info["latest_id"], info["api_uri"])
         with open('info.json', 'w') as f:
+            info["latest_id"] = new_lastest_id
             f.write(json.dumps(info))
         for new_article in latest_articles:
-            notif(notifier_, new_article["title"], new_article["source_url"])
+            notif(new_article["title"], new_article["source_url"])
+            open_browser(new_article["source_url"])
+        time.sleep(10)
 
 
 main()
-# notif(notifier_, "title_test", "message_test")
